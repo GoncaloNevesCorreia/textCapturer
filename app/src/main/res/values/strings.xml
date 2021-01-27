@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">PDM2 Text Capturer</string>
+    <string name="strTvAbout">The captured data is:</string>
+    <string name="strMenuItemLoadImageFromUrl">Load Image From Url</string>
+    <string name="strBtnSave">Save</string>
+</resources>
