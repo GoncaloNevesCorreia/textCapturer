@@ -52,8 +52,7 @@ public class CustomAdapter extends ArrayAdapter<SharedText> {
                                 (mContext.LAYOUT_INFLATER_SERVICE);
 
         if (linf!=null){
-            convertView =
-                    linf.inflate(mLayout, parent,false);
+            convertView = linf.inflate(mLayout, parent,false);
 
             ViewHolder viewHolder = new ViewHolder();
 
@@ -61,13 +60,17 @@ public class CustomAdapter extends ArrayAdapter<SharedText> {
             int id = c.getmId();
             String strText = c.getmText();
             String strDate = c.getmDate();
+
+
             viewHolder.txtText = convertView.findViewById(R.id.idTvText);
             viewHolder.txtDate = convertView.findViewById(R.id.idTvDate);
             viewHolder.btnSpeakText = convertView.findViewById(R.id.idBtnSpeakText);
             viewHolder.btnRemoveItem = convertView.findViewById(R.id.idBtnRemoveItem);
 
+
             viewHolder.txtText.setText(strText);
             viewHolder.txtDate.setText(strDate);
+
 
             mTTS = new TextToSpeech(mContext, status -> {
                 if (status == TextToSpeech.SUCCESS) {

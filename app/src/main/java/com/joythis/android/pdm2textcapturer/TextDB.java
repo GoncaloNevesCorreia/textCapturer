@@ -17,7 +17,7 @@ public class TextDB extends SQLiteOpenHelper {
     Context mContext;
     AmUtil amUtil;
 
-    public final static int DB_VERSION = 2;
+    public final static int DB_VERSION = 3;
 
     public final static String DB_NAME = "Text.DB";
     public final static String TABLE_TEXT = "tableText";

@@ -112,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
 
                     //display the received text in mTvCapturedText
                     mTvCapturedText.setText(strSharedText);
-
                     mTextDB.insertText(strSharedText);
                 }//if
 

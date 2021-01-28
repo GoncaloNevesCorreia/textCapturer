@@ -56,7 +56,6 @@
         android:layout_alignParentBottom="true"
         android:backgroundTint="@color/dark_blue"
         android:drawableLeft="@drawable/mic"
-        android:layout_centerHorizontal="true"
-        />
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

@@ -22,22 +22,4 @@ public class SharedText {
         this.mText = pText;
         this.mDate = pDate;
     }//SharedText
-
-
-    @Override
-    public String toString(){
-        String strRet = "";
-
-        strRet =
-                String.format(
-                        "%s [%s]",
-                        this.mText,
-                        this.mDate
-                );
-
-        return strRet;
-    }//toString
-
-
-
 }
