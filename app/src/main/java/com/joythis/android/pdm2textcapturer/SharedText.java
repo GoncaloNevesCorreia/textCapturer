@@ -1,6 +1,7 @@
 package com.joythis.android.pdm2textcapturer;
 
 public class SharedText {
+    private int mid;
     private String mText;
     private String mDate;
 
@@ -13,7 +14,11 @@ public class SharedText {
         return mDate;
     }
 
-    public SharedText (String pText, String pDate){
+    public int getmId() { return mid; }
+
+
+    public SharedText (int id, String pText, String pDate){
+        this.mid = id;
         this.mText = pText;
         this.mDate = pDate;
     }//SharedText

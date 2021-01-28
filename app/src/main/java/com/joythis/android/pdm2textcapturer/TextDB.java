@@ -26,16 +26,14 @@ public class TextDB extends SQLiteOpenHelper {
     public final static String COL_TEXT = "col_text";
     public final static String COL_DATE = "col_date";
 
-    public final static String DROP_TABLE_TEXT = "DROP TABLE IF EXISTS "+ TABLE_TEXT +";";
+    public final static String DROP_TABLE_TEXT = "DROP TABLE IF EXISTS " + TABLE_TEXT + ";";
 
     public final static String CREATE_TABLE_TEXT = "CREATE TABLE IF NOT EXISTS " + TABLE_TEXT
-            + "( "+ COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            + "( " + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
             COL_TEXT + " TEXT NOT NULL, " +
             COL_DATE + " TEXT NOT NULL);";
 
-    public final static String SELECT_ALL = "SELECT * FROM " + TABLE_TEXT + ";";
-
-
+    public final static String SELECT_ALL = "SELECT * FROM " + TABLE_TEXT + " ORDER BY " + COL_DATE +" DESC;";
 
 
     public TextDB(@Nullable Context context) {
@@ -44,7 +42,6 @@ public class TextDB extends SQLiteOpenHelper {
         this.mContext = context;
         amUtil = new AmUtil((Activity) context);
     }//ContactDB
-
 
 
     @Override
@@ -67,7 +64,8 @@ public class TextDB extends SQLiteOpenHelper {
 
     public static final long EMPTY_VALUE = -1;
     public static final long INSERTED_WITH_SUCCESS = 1;
-    public long insertText(String pStrText){
+
+    public long insertText(String pStrText) {
         String cleanText = pStrText.trim();
         if (cleanText.isEmpty()) return EMPTY_VALUE;
 
@@ -83,15 +81,14 @@ public class TextDB extends SQLiteOpenHelper {
 
                 pairsCV.put(COL_TEXT, cleanText);
                 pairsCV.put(COL_DATE, strDate);
-                db.insert(TABLE_TEXT,null, pairsCV );
+                db.insert(TABLE_TEXT, null, pairsCV);
                 db.close();
                 return INSERTED_WITH_SUCCESS;
             }
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e(
-                this.getClass().getName(),
-                e.toString()
+                    this.getClass().getName(),
+                    e.toString()
             );
         }
 
@@ -99,24 +96,28 @@ public class TextDB extends SQLiteOpenHelper {
 
     }//insertText
 
-    public ArrayList<SharedText> selectAll () {
+    public ArrayList<SharedText> selectAll() {
         ArrayList<SharedText> aRet = new ArrayList<>();
 
-        try{
+        try {
             SQLiteDatabase db = this.getReadableDatabase();
 
-            if (db!=null) {
-                Cursor cursor = db.rawQuery(SELECT_ALL,null);
+            if (db != null) {
+                Cursor cursor = db.rawQuery(SELECT_ALL, null);
                 if (cursor != null) {
                     cursor.moveToFirst();
                     while (!cursor.isAfterLast()) {
+
+                        int idxOfId = cursor.getColumnIndex(COL_ID);//0
+                        int _id = cursor.getInt(idxOfId);
+
                         int idxOfText = cursor.getColumnIndex(COL_TEXT);//1
                         String strName = cursor.getString(idxOfText);
 
                         int idxOfDate = cursor.getColumnIndex(COL_DATE); //2
                         String strNumber = cursor.getString(idxOfDate);
 
-                        SharedText c = new SharedText(strName, strNumber);
+                        SharedText c = new SharedText(_id, strName, strNumber);
 
                         aRet.add(c);
 
@@ -126,8 +127,7 @@ public class TextDB extends SQLiteOpenHelper {
                     db.close();
                 }//if there is a cursor objet to navigate through the objects that the select returned
             }//if we got a readable database
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             Log.e(
                     getClass().getName(),
                     e.toString()
@@ -138,5 +138,25 @@ public class TextDB extends SQLiteOpenHelper {
     }//selectAll
 
 
+    public final static boolean ITEM_REMOVED_FROM_DB = true;
 
+    public boolean remove(int id) {
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            String strWhereFilter = COL_ID + "=?";
+            String[] aValuesForFilters = {String.valueOf(id)};
+            try {
+                db.delete(TABLE_TEXT, strWhereFilter, aValuesForFilters);
+                return ITEM_REMOVED_FROM_DB;
+            }//try
+            catch (Exception e) {
+                Log.e(
+                        this.getClass().getName(),
+                        e.toString()
+                );
+            }//catch
+        }//if
+
+        return !ITEM_REMOVED_FROM_DB;
+    }//remove
 }

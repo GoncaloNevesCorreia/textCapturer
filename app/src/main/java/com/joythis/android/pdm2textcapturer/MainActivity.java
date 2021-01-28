@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -30,73 +31,9 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import kotlin.reflect.KFunction;
 
 public class MainActivity extends AppCompatActivity {
-
-    Bitmap mResultBitmap;
-
-    class MyAsyncTaskToDownloadSomeImageAndDisplayItInImageView
-    extends AsyncTask <
-        String, //datatype of the input required (URL)
-        Void, //no progress control
-        Bitmap //datatype of what is the result of the async operation (Bitmap)
-    >
-    {
-        /*
-        code that can NOT run in the main thread
-        the parameter should be the URL to download
-         */
-        @Override
-        protected Bitmap doInBackground(String... strings) {
-            String strUrl = strings[0];
-            Bitmap bitmapForTheImage;
-            bitmapForTheImage = AmIoHttp.readBitmapFromUrl(strUrl);
-            return bitmapForTheImage;
-
-            /*
-            try {
-                 bitmapForTheImage = AmIoHttp.readBitmapFromUrl(strUrl);
-            }//try
-            catch (Exception e){
-                //disaster!
-                return null;
-            }//catch
-            return bitmapForTheImage;
-
-             */
-        }//doInBackground
-
-        //auto-called when doInBackground ends
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap!=null){
-                mResultBitmap = bitmap; //example of how to hold the result, past onPostExecute
-                mIvCapturedImage.setImageBitmap(bitmap);
-            }//if
-
-            super.onPostExecute(bitmap);
-        }//onPostExecute
-    }//MyAsyncTaskToDownloadSomeImageAndDisplayItInImageView
-
-    class MyAsyncTaskThatPostsToAWebServiceTheWhenAndTheWhatThatWasShared
-    extends AsyncTask <String /*inputs*/, Void /*progress*/, String /*return of doInBackground*/> {
-
-        @Override
-        protected String doInBackground(String... strings) {
-            String strWhen = strings[0];
-            String strWhat = strings[1];
-            /*String strServerResponse =
-                postShare(
-                    strWhen,
-                    strWhat
-                );
-            return strServerResponse; */
-            return "";
-        }//doInBackground
-    }//MyAsyncTask
-
-
-
     Context mContext;
 
     @BindView(R.id.idEtText)
@@ -105,14 +42,16 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.idTvCapturedText)
         TextView mTvCapturedText;
 
-    @BindView(R.id.idIvCapturedImage)
-        ImageView mIvCapturedImage;
-
+    @BindView(R.id.idLvTextCaptures)
+        ListView mLvTextCaptures;
 
     ArrayList<SharedText> mAlTextCaptures;
     ArrayAdapter<SharedText> mAd;
-    ListView mLvTextCaptures;
+
     TextDB mTextDB;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,38 +65,20 @@ public class MainActivity extends AppCompatActivity {
         mContext = this;
         ButterKnife.bind(this);
 
-        mLvTextCaptures = findViewById(R.id.idLvTextCaptures);
-        mAlTextCaptures = new ArrayList<>();
-        mTextDB = new TextDB(mContext);
-        mAd = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mAlTextCaptures);
-        mLvTextCaptures.setAdapter(mAd);
-
         comportamentoDaListview();
-
 
         checkIfCalledByAnotherAppAndReceiveItsSharedData();
 
         syncLvTextWithDB();
     }//init
 
+
+
     void comportamentoDaListview() {
-
+        mTextDB = new TextDB(mContext);
         mAlTextCaptures = new ArrayList<>();
-
-
-        mAd = new CustomAdapter(mAlTextCaptures, getApplicationContext());
-
+        mAd = new CustomAdapter(mContext, mAlTextCaptures, mTextDB, MainActivity.this);
         mLvTextCaptures.setAdapter(mAd);
-        mLvTextCaptures.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                SharedText dataModel= mAlTextCaptures.get(position);
-
-
-
-            }
-        });
     }
 
     void checkIfCalledByAnotherAppAndReceiveItsSharedData(){
@@ -202,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                         intentHowWasICalled.getParcelableExtra(
                             Intent.EXTRA_STREAM
                         );
-                    mIvCapturedImage.setImageURI(uriForTheImage);
+                    //mIvCapturedImage.setImageURI(uriForTheImage);
                 }
             }//if
         }//if
@@ -219,47 +140,6 @@ public class MainActivity extends AppCompatActivity {
             mAd.notifyDataSetChanged();
         }//if
     }
-
-
-
-    //attaches a menu resource (XML) to a runtime Activity
-    @Override
-    public boolean onCreateOptionsMenu(Menu pMenu) {
-        MenuInflater minf = getMenuInflater();
-
-        if (minf!=null){
-            minf.inflate(
-                R.menu.my_menu, //XML
-                pMenu //runtime Java structure which represents the app's menu
-            );
-        }//if
-
-        return super.onCreateOptionsMenu(pMenu);
-    }//onCreateOptionsMenu
-
-    //set the behavior for each option
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem pItem) {
-        switch(pItem.getItemId()){
-            case R.id.idMenuItemLoadImageFromUrl:
-                String strTestUrl =
-                    "https://arturmarques.com/edu/pdm2/pdm2.png";
-
-                //will not work!
-                /*
-                loadImageFromUrlAndDisplayItInImageView(
-                    strTestUrl,
-                    mIvCapturedImage
-                );
-                 */
-                MyAsyncTaskToDownloadSomeImageAndDisplayItInImageView t;
-                t = new MyAsyncTaskToDownloadSomeImageAndDisplayItInImageView();
-                t.execute(strTestUrl);
-                break;
-        }//switch
-        return super.onOptionsItemSelected(pItem);
-    }//onOptionsItemSelected
-
 
 
     int especial;
@@ -301,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
         syncLvTextWithDB();
     }
 
+    final static int CALL_BACK_NUMBER = 1;
     @OnClick(R.id.idBtnSpeach)
     public void btnSpeech(View view){
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -309,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,"Hi Speak something!");
 
         try {
-            startActivityForResult(intent, 1);}
+            startActivityForResult(intent, CALL_BACK_NUMBER);}
         catch (ActivityNotFoundException e) {
             Toast.makeText(this,e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -320,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         switch (requestCode){
-            case 1:
+            case CALL_BACK_NUMBER:
                 if(resultCode==RESULT_OK && null!=data){
                     ArrayList<String>result =
                             data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);

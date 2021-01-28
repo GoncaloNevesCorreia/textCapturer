@@ -1,85 +1,113 @@
 package com.joythis.android.pdm2textcapturer;
 
 import android.content.Context;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
+import java.util.Locale;
 
-public class CustomAdapter extends ArrayAdapter<SharedText> implements View.OnClickListener {
-    private ArrayList<SharedText> dataSet;
+public class CustomAdapter extends ArrayAdapter<SharedText> {
+    private MainActivity mainActivity;
+    private TextToSpeech mTTS;
+    Context mContext; //Context of client Activity(ies)
+    int mLayout; //layout resource to which we must adapt
+    ArrayList<SharedText> mAlText; //the data to adapt
+    TextDB mdb;
 
-    Context mContext;
 
     // View lookup cache
     private static class ViewHolder {
         TextView txtText;
         TextView txtDate;
+        Button btnSpeakText;
+        Button btnRemoveItem;
     }
 
-    public CustomAdapter(ArrayList<SharedText> data, Context context) {
+    public CustomAdapter(Context context, ArrayList<SharedText> data, TextDB db, MainActivity activity) {
         super(context, R.layout.row_item, data);
-        this.dataSet = data;
+        this.mAlText = data;
         this.mContext=context;
-
+        this.mLayout = R.layout.row_item;
+        this.mdb = db;
+        this.mainActivity = activity;
     }
 
-
+    @NonNull
     @Override
-    public void onClick(View v) {
+    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+        LayoutInflater linf = (LayoutInflater)
+                (LayoutInflater)
+                        mContext.getSystemService
+                                (mContext.LAYOUT_INFLATER_SERVICE);
 
-        int position=(Integer) v.getTag();
-        Object object= getItem(position);
-        SharedText dataModel=(SharedText)object;
+        if (linf!=null){
+            convertView =
+                    linf.inflate(mLayout, parent,false);
 
-        switch (v.getId()) {
+            ViewHolder viewHolder = new ViewHolder();
+
+            SharedText c = mAlText.get(position);
+            int id = c.getmId();
+            String strText = c.getmText();
+            String strDate = c.getmDate();
+            viewHolder.txtText = convertView.findViewById(R.id.idTvText);
+            viewHolder.txtDate = convertView.findViewById(R.id.idTvDate);
+            viewHolder.btnSpeakText = convertView.findViewById(R.id.idBtnSpeakText);
+            viewHolder.btnRemoveItem = convertView.findViewById(R.id.idBtnRemoveItem);
+
+            viewHolder.txtText.setText(strText);
+            viewHolder.txtDate.setText(strDate);
+
+            mTTS = new TextToSpeech(mContext, status -> {
+                if (status == TextToSpeech.SUCCESS) {
+                    int result = mTTS.setLanguage(Locale.getDefault());
+                    if (result == TextToSpeech.LANG_MISSING_DATA
+                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "Language not supported");
+                    } else {
+                        viewHolder.btnSpeakText.setEnabled(true);
+                    }
+                } else {
+                    Log.e("TTS", "Initialization failed");
+                }
+            });
+
+            viewHolder.btnSpeakText.setOnClickListener(v -> {
+                speak(strText);
+            });
 
 
-            case R.id.idBtnSpeakText:
-                Toast.makeText(mContext, "Teste 123", Toast.LENGTH_LONG).show();
+            viewHolder.btnRemoveItem.setOnClickListener(v -> {
+                mdb.remove(id);
+                mainActivity.syncLvTextWithDB();
 
-                //Toast.makeText(mContext, dataModel.getmText(), Toast.LENGTH_LONG).show();
-                break;
+                Toast.makeText(mContext, String.valueOf(id), Toast.LENGTH_SHORT).show();
+            });
+
+            return convertView;
         }
+
+        return super.getView(position, convertView, parent);
     }
 
+    private void speak(String strText) {
+        final int pitch = 1;
+        final int speed = 1;
 
-    private int lastPosition = -1;
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        // Get the data item for this position
-        SharedText dataModel = getItem(position);
-        // Check if an existing view is being reused, otherwise inflate the view
-        ViewHolder viewHolder; // view lookup cache stored in tag
-
-        final View result;
-
-        if (convertView == null) {
-
-            viewHolder = new ViewHolder();
-            LayoutInflater inflater = LayoutInflater.from(getContext());
-            convertView = inflater.inflate(R.layout.row_item, parent, false);
-            viewHolder.txtText = (TextView) convertView.findViewById(R.id.idTvText);
-            viewHolder.txtDate = (TextView) convertView.findViewById(R.id.idTvDate);
-
-
-            result=convertView;
-
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) convertView.getTag();
-            result=convertView;
-        }
-
-        viewHolder.txtText.setText(dataModel.getmText());
-        viewHolder.txtDate.setText(dataModel.getmDate());
-        // Return the completed view to render on screen
-        return convertView;
+        mTTS.setPitch(pitch);
+        mTTS.setSpeechRate(speed);
+        mTTS.speak(strText, TextToSpeech.QUEUE_FLUSH, null);
     }
 }
 
