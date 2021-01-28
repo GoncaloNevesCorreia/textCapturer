@@ -27,12 +27,13 @@
         android:layout_height="wrap_content">
 
         <EditText
-            android:id="@+id/idEt"
+            android:id="@+id/idEtText"
             android:layout_width="0dp"
             android:layout_weight="3"
             android:layout_height="wrap_content"/>
 
         <Button
+            android:id="@+id/idBtnSave"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -52,5 +53,15 @@
         android:layout_below="@id/idLlInsert"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/idBtnSpeach"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="@string/strBtnSpeach"
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/black" />
 
 </RelativeLayout>

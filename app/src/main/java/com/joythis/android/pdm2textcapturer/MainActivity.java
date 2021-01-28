@@ -1,40 +1,35 @@
 package com.joythis.android.pdm2textcapturer;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
+import android.speech.RecognizerIntent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Locale;
 
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -103,16 +98,21 @@ public class MainActivity extends AppCompatActivity {
 
 
     Context mContext;
-    TextView mTvAbout, mTvCapturedText;
-    ImageView mIvCapturedImage;
+
+    @BindView(R.id.idEtText)
+        EditText mEtText;
+
+    @BindView(R.id.idTvCapturedText)
+        TextView mTvCapturedText;
+
+    @BindView(R.id.idIvCapturedImage)
+        ImageView mIvCapturedImage;
+
 
     ArrayList<SharedText> mAlTextCaptures;
     ArrayAdapter<SharedText> mAd;
-
     ListView mLvTextCaptures;
     TextDB mTextDB;
-
-    public final static String MY_DB = "MY_SHARED_TEXTS2.DB";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,26 +124,41 @@ public class MainActivity extends AppCompatActivity {
 
     void init(Bundle pBundle){
         mContext = this;
+        ButterKnife.bind(this);
 
-        mTvCapturedText = findViewById (R.id.idTvCapturedText);
-        mIvCapturedImage = findViewById (R.id.idIvCapturedImage);
         mLvTextCaptures = findViewById(R.id.idLvTextCaptures);
-
-
         mAlTextCaptures = new ArrayList<>();
-
         mTextDB = new TextDB(mContext);
-
         mAd = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mAlTextCaptures);
         mLvTextCaptures.setAdapter(mAd);
 
+        comportamentoDaListview();
 
-        mTvCapturedText.setVisibility(View.GONE);
 
         checkIfCalledByAnotherAppAndReceiveItsSharedData();
 
         syncLvTextWithDB();
     }//init
+
+    void comportamentoDaListview() {
+
+        mAlTextCaptures = new ArrayList<>();
+
+
+        mAd = new CustomAdapter(mAlTextCaptures, getApplicationContext());
+
+        mLvTextCaptures.setAdapter(mAd);
+        mLvTextCaptures.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                SharedText dataModel= mAlTextCaptures.get(position);
+
+
+
+            }
+        });
+    }
 
     void checkIfCalledByAnotherAppAndReceiveItsSharedData(){
         Intent intentHowWasICalled = getIntent();
@@ -278,7 +293,42 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    @OnClick(R.id.idBtnSave)
+    public void saveText() {
+        String data = mEtText.getText().toString();
+        mTextDB.insertText(data);
+        mEtText.setText("");
+        syncLvTextWithDB();
+    }
 
+    @OnClick(R.id.idBtnSpeach)
+    public void btnSpeech(View view){
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,"Hi Speak something!");
+
+        try {
+            startActivityForResult(intent, 1);}
+        catch (ActivityNotFoundException e) {
+            Toast.makeText(this,e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case 1:
+                if(resultCode==RESULT_OK && null!=data){
+                    ArrayList<String>result =
+                            data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    mEtText.setText(result.get(0));
+
+                }
+        }
+    }
 
 
 }//MainActivity

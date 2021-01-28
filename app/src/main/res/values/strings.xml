@@ -3,4 +3,5 @@
     <string name="strTvAbout">The captured data is:</string>
     <string name="strMenuItemLoadImageFromUrl">Load Image From Url</string>
     <string name="strBtnSave">Save</string>
+    <string name="strBtnSpeach">Tap to open mic</string>
 </resources>
